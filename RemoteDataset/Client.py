@@ -66,3 +66,8 @@ class RemoteDataset:
                 self.request_server.send(b"r:dataset:" + request.encode())
                 dataset_length = int(self.request_server.recv())
                 yield subj, date.split("_")[0], RemoteDataAdapter(self.request_server, dataset_length, self.stat)
+                
+    def close(self):
+        self.request_server.send(b"r:close")
+        self.request_server.close()
+        self.tun.stop()
