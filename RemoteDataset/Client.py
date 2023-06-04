@@ -18,7 +18,7 @@ class RemoteDataAdapter(torch.utils.data.Dataset):
     def __connect(self):
         self.request_server = pynng.Req0()
         self.request_server.dial(f"tcp://127.0.0.1:{self.port}")
-        self.__connect = True
+        self.__connected = True
         
     def __len__(self):
         if not self.__connected:
