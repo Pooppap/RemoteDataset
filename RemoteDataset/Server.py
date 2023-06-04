@@ -59,6 +59,8 @@ def main(args):
             raise ValueError("Invalid request header")
         
         if request[1] == "start":
+            if args.debug:
+                print("Sending dataset list")
             reply = msgpack.packb(dataset)
             reply_server.send(reply)
         
