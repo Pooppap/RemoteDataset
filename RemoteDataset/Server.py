@@ -27,7 +27,6 @@ parser.add_argument(
     type=int,
     help='Port'
 )
-
 parser.add_argument(
     '--debug',
     type=int,
