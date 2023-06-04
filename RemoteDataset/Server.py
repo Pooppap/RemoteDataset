@@ -53,19 +53,16 @@ def main(args):
     reply_server = pynng.Rep0()
     reply_server.listen(f"tcp://127.0.0.1:{args.port}")
     
-    request = reply_server.recv().decode().split(":")
-    if request[0] != "r":
-        raise ValueError("Invalid request")
-    
-    reply = msgpack.packb(dataset)
-    reply_server.send(reply)
-    
     while True:
         request = reply_server.recv().decode().split(":")
         if request[0] != "r":
-            raise ValueError("Invalid request")
+            raise ValueError("Invalid request header")
         
-        if request[1] == "dataset":
+        if request[1] == "start":
+            reply = msgpack.packb(dataset)
+            reply_server.send(reply)
+        
+        elif request[1] == "dataset":
             if args.debug:
                 print(f"Sending dataset {request[2]}")
 
@@ -94,7 +91,7 @@ def main(args):
             reply = f"{len(data_slice_start)}".encode()
             reply_server.send(reply)
         
-        if request[1] == "index":
+        elif request[1] == "index":
             if args.debug:
                 print(f"Sending index {int(request[2])}")
 
@@ -103,11 +100,14 @@ def main(args):
             reply = msgpack.packb(data_chunk)
             reply_server.send(reply)
         
-        if request[1] == "close":
+        elif request[1] == "close":
             print("Closing server...")
             sleep(1)
             reply_server.close()
             break
+        
+        else:
+            raise ValueError("Invalid request type")
         
 if __name__ == "__main__":
     args = parser.parse_args()
