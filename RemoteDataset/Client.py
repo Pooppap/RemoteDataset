@@ -9,10 +9,11 @@ msgpack_numpy.patch()
 
 
 class RemoteDataAdapter(torch.utils.data.Dataset):
-    def __init__(self, request_server, dataset_length, stat) -> None:
+    def __init__(self, dataset_length, stat) -> None:
         self.stat = stat
-        self.request_server = request_server
+        self.request_server = pynng.Req0()
         self.dataset_length = dataset_length
+        self.request_server.dial(f"tcp://127.0.0.1:{self.port}")
         
     def __len__(self):
         return self.dataset_length
@@ -65,7 +66,7 @@ class RemoteDataset:
                 request = "_".join([subj, date])
                 self.request_server.send(b"r:dataset:" + request.encode())
                 dataset_length = int(self.request_server.recv())
-                yield subj, date.split("_")[0], RemoteDataAdapter(self.request_server, dataset_length, self.stat)
+                yield subj, date.split("_")[0], RemoteDataAdapter(dataset_length, self.stat, self.port)
                 
     def close(self):
         self.request_server.send(b"r:close")
