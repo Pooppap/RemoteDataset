@@ -77,7 +77,7 @@ def main(args):
             try:
                 data = np.load(os.path.join(args.main_path, request[2]))["resampled_matrices"]
             except:
-                reply = msgpack.packb(-1)
+                reply = b"-1"
                 reply_server.send(reply)
                 continue
 

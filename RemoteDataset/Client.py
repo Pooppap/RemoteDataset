@@ -48,7 +48,10 @@ class RemoteDataset:
         
     def load_dataset(self):
         self.request_server.send(b"r:dataset:" + self.request.encode())
-        _ = int(self.request_server.recv())
+        ret = int(self.request_server.recv())
+        if ret  == -1:
+            return None
+
         self.request_server.send(b"r:whole")
         packed_dataset = self.request_server.recv()
         dataset = msgpack.unpackb(packed_dataset)
