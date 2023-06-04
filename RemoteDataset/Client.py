@@ -9,8 +9,7 @@ msgpack_numpy.patch()
 
 
 class RemoteDataAdapter(torch.utils.data.Dataset):
-    def __init__(self, dataset, stat, port) -> None:
-        self.port = port
+    def __init__(self, dataset, stat) -> None:
         self.stat = stat
         self.dataset = dataset
         
@@ -63,7 +62,7 @@ class RemoteDataset:
                 self.request_server.send(b"r:whole")
                 packed_dataset = self.request_server.recv()
                 dataset = msgpack.unpackb(packed_dataset)
-                yield subj, date.split("_")[0], RemoteDataAdapter(dataset, self.stat, self.port)
+                yield subj, date.split("_")[0], RemoteDataAdapter(dataset, self.stat)
                 
     def close(self):
         self.request_server.send(b"r:close")
