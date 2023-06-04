@@ -74,7 +74,13 @@ def main(args):
             if args.debug:
                 print(f"Sending dataset {request[2]}")
 
-            data = np.load(os.path.join(args.main_path, request[2]))["resampled_matrices"]
+            try:
+                data = np.load(os.path.join(args.main_path, request[2]))["resampled_matrices"]
+            except:
+                reply = msgpack.packb(-1)
+                reply_server.send(reply)
+                continue
+
             data = np.hstack(
                 [
                     data[0, :, 4:7],

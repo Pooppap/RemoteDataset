@@ -9,9 +9,8 @@ msgpack_numpy.patch()
 
 
 class RemoteDataAdapter(torch.utils.data.Dataset):
-    def __init__(self, dataset, stat) -> None:
+    def __init__(self, stat) -> None:
         self.stat = stat
-        self.dataset = dataset
         
     def __len__(self):
         return self.dataset.shape[0]
@@ -47,6 +46,14 @@ class RemoteDataset:
         self.tun.start()
         self.request_server.dial(f"tcp://127.0.0.1:{self.port}")
         
+    def load_dataset(self):
+        self.request_server.send(b"r:dataset:" + self.request.encode())
+        _ = int(self.request_server.recv())
+        self.request_server.send(b"r:whole")
+        packed_dataset = self.request_server.recv()
+        dataset = msgpack.unpackb(packed_dataset)
+        return dataset
+        
     def __len__(self):
         self.request_server.send(b"r:start")
         datasets = self.request_server.recv()
@@ -56,13 +63,8 @@ class RemoteDataset:
     def __iter__(self):
         for subj, dates in self.datasets.items():
             for date in dates:
-                request = "_".join([subj, date])
-                self.request_server.send(b"r:dataset:" + request.encode())
-                _ = int(self.request_server.recv())
-                self.request_server.send(b"r:whole")
-                packed_dataset = self.request_server.recv()
-                dataset = msgpack.unpackb(packed_dataset)
-                yield subj, date.split("_")[0], RemoteDataAdapter(dataset, self.stat)
+                self.request = "_".join([subj, date])
+                yield subj, date.split("_")[0], RemoteDataAdapter(self.stat)
                 
     def close(self):
         self.request_server.send(b"r:close")
