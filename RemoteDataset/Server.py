@@ -49,6 +49,12 @@ def main(args):
         subj_dates_list.append(date)
         dataset[subj] = subj_dates_list
         
+    for subj, dates in dataset.items():
+        dates.sort()
+        if len(dates) > 15:
+            mid_point = len(dates) // 2
+            dataset[subj] = dates[:5] + dates[mid_point - 2:mid_point + 3] + dates[-5:]
+        
     print("Starting server...")
     reply_server = pynng.Rep0()
     reply_server.listen(f"tcp://127.0.0.1:{args.port}")
