@@ -102,6 +102,11 @@ def main(args):
             reply = msgpack.packb(data_chunk)
             reply_server.send(reply)
         
+        elif request[1] == "whole":
+            data_whole = np.stack([data[starting_index:starting_index + 80, :] for starting_index in data_slice_start])
+            reply = msgpack.packb(data_whole)
+            reply_server.send(reply)
+        
         elif request[1] == "close":
             print("Closing server...")
             sleep(1)

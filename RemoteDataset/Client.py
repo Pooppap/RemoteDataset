@@ -9,39 +9,19 @@ msgpack_numpy.patch()
 
 
 class RemoteDataAdapter(torch.utils.data.Dataset):
-    def __init__(self, dataset_length, stat, port) -> None:
+    def __init__(self, dataset, stat, port) -> None:
         self.port = port
         self.stat = stat
-        self.__connected = False
-        self.dataset_length = dataset_length
-        
-    def __connect(self):
-        self.request_server = pynng.Req0()
-        self.request_server.dial(f"tcp://127.0.0.1:{self.port}")
-        self.__connected = True
+        self.dataset = dataset
         
     def __len__(self):
-        if not self.__connected:
-            self.__connect()
-            
-        return self.dataset_length
+        return self.dataset.shape[0]
     
     def __getitem__(self, idx):
-        if not self.__connected:
-            self.__connect()
-
-        request = f"r:index:{idx}"
-        self.request_server.send(request.encode())
-        packed_data = self.request_server.recv()
-        data = msgpack.unpackb(packed_data)
-        
-        data = torch.from_numpy(data)
+        data = torch.from_numpy(self.dataset[idx, :, :])
         data = self.to_norm(data, self.stat[0], self.stat[1]).t()
         
         return data
-    
-    def __del__(self):
-         self.request_server.close()
         
     @staticmethod
     def to_norm(data, means, stds):
@@ -79,8 +59,11 @@ class RemoteDataset:
             for date in dates:
                 request = "_".join([subj, date])
                 self.request_server.send(b"r:dataset:" + request.encode())
-                dataset_length = int(self.request_server.recv())
-                yield subj, date.split("_")[0], RemoteDataAdapter(dataset_length, self.stat, self.port)
+                _ = int(self.request_server.recv())
+                self.request_server.send(b"r:whole")
+                packed_dataset = self.request_server.recv()
+                dataset = msgpack.unpackb(packed_dataset)
+                yield subj, date.split("_")[0], RemoteDataAdapter(dataset, self.stat, self.port)
                 
     def close(self):
         self.request_server.send(b"r:close")
